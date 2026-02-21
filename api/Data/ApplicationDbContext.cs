@@ -7,15 +7,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Data
 {
-    public class ApplicationDbContext: DbContext
+    public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions dbContextOptions) 
-        : base()
+        public ApplicationDbContext(DbContextOptions dbContextOptions)
+        : base(dbContextOptions)
         {
-            
+
         }
 
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<BankAccountOperation> BankAccountOperations { get; set; }
+
+
     }
 }

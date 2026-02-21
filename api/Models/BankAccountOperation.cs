@@ -9,7 +9,7 @@ namespace api.Models
 {
     public class BankAccountOperation
     {
-        public Guid Id { get; }
+        public Guid Id { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
