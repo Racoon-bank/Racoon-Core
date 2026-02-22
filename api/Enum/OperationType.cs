@@ -1,8 +1,8 @@
-namespace api.Features.BankAccount.Enum
+namespace api.Enum
 {
     public enum OperationType
     {
         Deposit,
-        Withdraw
+        Withdraw,
     }
 }

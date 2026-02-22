@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using api.Features.BankAccount.Dto;
+using api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace api.Features.BankAccount
 {
@@ -12,7 +8,11 @@ namespace api.Features.BankAccount
     [Route("api")]
     public class BankAccountController : ControllerBase
     {
-        public BankAccountController() { }
+        private readonly IBankAccountService _bankAccountService;
+        public BankAccountController(IBankAccountService bankAccountService)
+        {
+            _bankAccountService = bankAccountService;
+        }
 
         /// <summary>
         /// Gets all bank accounts of a user
@@ -20,7 +20,8 @@ namespace api.Features.BankAccount
         [HttpGet("bank-accounts/my")]
         public async Task<ActionResult<List<BankAccountDto>>> GetUserBankAccounts()
         {
-            throw new NotImplementedException();
+            var accounts = await _bankAccountService.GetAllAsync(); // add userId later
+            return Ok(accounts);
         }
 
         /// <summary>
@@ -31,7 +32,8 @@ namespace api.Features.BankAccount
             [FromRoute] Guid id
         )
         {
-            throw new NotImplementedException();
+            var history = await _bankAccountService.GetHistoryAsync(id);
+            return Ok(history);
         }
 
         /// <summary>
@@ -42,25 +44,28 @@ namespace api.Features.BankAccount
             [FromRoute] Guid id
         )
         {
-            throw new NotImplementedException();
+            var accounts = await _bankAccountService.GetAllByIdAsync(id);
+            return Ok(accounts);
         }
 
         /// <summary>
-        /// Gets all bank accounts of a user (for employee)
+        /// Gets all bank accounts (for employee)
         /// </summary>
         [HttpGet("bank-accounts/all")]
         public async Task<ActionResult<List<BankAccountDto>>> GetAllBankAccounts()
         {
-            throw new NotImplementedException();
+            var accounts = await _bankAccountService.GetAllAsync();
+            return Ok(accounts);
         }
 
         /// <summary>
         /// Creates new bank account
         /// </summary>
         [HttpPost("bank-accounts")]
-        public async Task<ActionResult<BankAccountDto>> CreateBankAccount()
+        public async Task<ActionResult<BankAccountDto>> CreateBankAccount([FromBody] Guid id)
         {
-            throw new NotImplementedException();
+            var account = await _bankAccountService.AddAsync(id);
+            return Ok(account);
         }
 
         /// <summary>
@@ -81,7 +86,8 @@ namespace api.Features.BankAccount
             [FromBody] MoneyOperationDto dto
         )
         {
-            throw new NotImplementedException();
+            var bankAccount = await _bankAccountService.DepositMoneyAsync(id, dto);
+            return Ok(bankAccount);
         }
 
         /// <summary>
@@ -93,7 +99,8 @@ namespace api.Features.BankAccount
             [FromBody] MoneyOperationDto dto
         )
         {
-            throw new NotImplementedException();
+            var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto);
+            return Ok(bankAccount);
         }
     }
 }
