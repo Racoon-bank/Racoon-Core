@@ -17,5 +17,6 @@ namespace api.Models
         public DateTime CreatedAt { get; set; }
 
         public Guid BankAccountId { get; set; }
+        public BankAccount BankAccount { get; set; }
     }
 }

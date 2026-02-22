@@ -7,13 +7,28 @@ namespace api.Models
 {
     public class BankAccount
     {
+        private static readonly Random _random = new();
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public string AccountNumber { get; set; } = string.Empty;
         public decimal Balance { get; set; }
         public DateTime CreatedAt { get; set; }
-
         public List<BankAccountOperation> BankAccountHistory { get; set; } =
             new List<BankAccountOperation>();
+
+        public BankAccount(Guid userId)
+        {
+            Id = Guid.NewGuid();
+            UserId = userId;
+            AccountNumber = GenerateAccountNumber();
+            Balance = 0m;
+            CreatedAt = DateTime.UtcNow;
+        }
+
+        private static string GenerateAccountNumber()
+        {
+            return $"{DateTime.UtcNow:yyyyMMdd}"
+                + string.Concat(Enumerable.Range(0, 12).Select(_ => _random.Next(0, 10)));
+        }
     }
 }
