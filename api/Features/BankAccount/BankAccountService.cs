@@ -30,66 +30,40 @@ namespace api.Features
             return bankAccount.ToBankAccountDto();
         }
 
-        public async Task<Models.BankAccount?> DeleteAsync(Guid bankAccountId) //fix later
+        public async Task<Models.BankAccount?> DeleteAsync(Guid bankAccountId)
         {
             var account = await GetByIdAsync(bankAccountId);
             if (account == null)
                 throw new BankAccountNotFoundException(bankAccountId);
 
-            _context.BankAccounts.Remove(account);
+            _context.BankAccounts.Remove(account); // all remaining money goes to poor HITs students
             await _context.SaveChangesAsync();
             return account;
         }
 
         public async Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto)
         {
-            var account = await GetByIdAsync(id);
-            if (account == null)
-                throw new BankAccountNotFoundException(id);
-
-            var updatedAccount = await UpdateAsync(account, account.Balance + operationDto.Amount);
-
-            await AddBankAccountOperation(
-                new BankAccountOperation
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = operationDto.Amount,
-                    Type = OperationType.Deposit,
-                    CreatedAt = DateTime.UtcNow,
-                    BankAccountId = updatedAccount.Id,
-                    BankAccount = updatedAccount,
-                }
-            );
-            return updatedAccount.ToBankAccountDto();
+            var account = await ChangeBalanceAsync(id, operationDto.Amount, OperationType.Deposit);
+            return account.ToBankAccountDto();
         }
 
-        public async Task<BankAccountDto?> WithdrawMoneyAsync(
+        public async Task<BankAccountDto> WithdrawMoneyAsync(
             Guid id,
             MoneyOperationDto operationDto
         )
         {
-            var account = await GetByIdAsync(id);
-            if (account == null)
-                throw new BankAccountNotFoundException(id);
+            var account = await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.Withdraw);
+            return account.ToBankAccountDto();
+        }
 
-            var newBalance = account.Balance - operationDto.Amount;
-            if (newBalance < 0)
-                throw new InsufficientFundsException();
+        public async Task ApplyCredit(Guid id, MoneyOperationDto operationDto)
+        {
+            var account = await ChangeBalanceAsync(id, operationDto.Amount, OperationType.CreditIssued);
+        }
 
-            var updatedAccount = await UpdateAsync(account, newBalance);
-
-            await AddBankAccountOperation(
-                new BankAccountOperation
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = operationDto.Amount,
-                    Type = OperationType.Withdraw,
-                    CreatedAt = DateTime.UtcNow,
-                    BankAccountId = updatedAccount.Id,
-                    BankAccount = updatedAccount,
-                }
-            );
-            return updatedAccount.ToBankAccountDto();
+        public async Task PayCredit(Guid id, MoneyOperationDto operationDto)
+        {
+            var account = await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.CreditPayment);
         }
 
         public async Task<List<BankAccountDto>> GetAllAsync()
@@ -119,21 +93,47 @@ namespace api.Features
             await _context.SaveChangesAsync();
         }
 
-        private async Task<Models.BankAccount> UpdateAsync(
-            Models.BankAccount account,
-            decimal newBalance
-        )
-        {
-            account.Balance = newBalance;
-            _context.BankAccounts.Update(account);
-            await _context.SaveChangesAsync();
-            return account;
-        }
+        // private async Task<Models.BankAccount> UpdateAsync(
+        //     Models.BankAccount account,
+        //     decimal newBalance
+        // )
+        // {
+        //     account.Balance = newBalance;
+        //     _context.BankAccounts.Update(account);
+        //     await _context.SaveChangesAsync();
+        //     return account;
+        // }
 
         private async Task<Models.BankAccount?> GetByIdAsync(Guid bankAccountId)
         {
             return await _context.BankAccounts.FirstOrDefaultAsync(x => x.Id == bankAccountId);
         }
 
+        private async Task<Models.BankAccount> ChangeBalanceAsync(Guid accountId, decimal amount, OperationType operationType)
+        {
+            var account = await GetByIdAsync(accountId);
+            if (account == null)
+                throw new BankAccountNotFoundException(accountId);
+
+            var newBalance = account.Balance + amount;
+
+            if (newBalance < 0)
+                throw new InsufficientFundsException();
+
+            account.Balance = newBalance;
+
+            _context.BankAccountOperations.Add(new BankAccountOperation
+            {
+                Id = Guid.NewGuid(),
+                Amount = Math.Abs(amount),
+                Type = operationType,
+                CreatedAt = DateTime.UtcNow,
+                BankAccountId = account.Id
+            });
+
+            await _context.SaveChangesAsync();
+
+            return account;
+        }
     }
 }

@@ -1,11 +1,13 @@
 using api.Features.BankAccount.Dto;
 using api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using api.Extensions;
 
 namespace api.Features.BankAccount
 {
     [ApiController]
-    [Route("api")]
+    [Route("api/bank-accounts")]
     public class BankAccountController : ControllerBase
     {
         private readonly IBankAccountService _bankAccountService;
@@ -17,17 +19,20 @@ namespace api.Features.BankAccount
         /// <summary>
         /// Gets all bank accounts of a user
         /// </summary>
-        [HttpGet("bank-accounts/my")]
+        [HttpGet("my")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<List<BankAccountDto>>> GetUserBankAccounts()
         {
-            var accounts = await _bankAccountService.GetAllAsync(); // add userId later
+            var userId = User.GetId();
+            var accounts = await _bankAccountService.GetAllByIdAsync(new Guid(userId));
             return Ok(accounts);
         }
 
         /// <summary>
         /// Gets operation history for a bank account
         /// </summary>
-        [HttpGet("bank-accounts/{id}/history")]
+        [HttpGet("{id}/history")]
+        [Authorize]
         public async Task<ActionResult<List<BankAccountOperationDto>>> GetBankAccountHistory(
             [FromRoute] Guid id
         )
@@ -39,7 +44,8 @@ namespace api.Features.BankAccount
         /// <summary>
         /// Gets all bank accounts of a user (for employee)
         /// </summary>
-        [HttpGet("user/{id}/bank-accounts")]
+        [HttpGet("/api/user/{id}/bank-accounts")]
+        [Authorize(Roles = "Employee")]
         public async Task<ActionResult<List<BankAccountDto>>> GetUserBankAccountsForEmployee(
             [FromRoute] Guid id
         )
@@ -51,7 +57,8 @@ namespace api.Features.BankAccount
         /// <summary>
         /// Gets all bank accounts (for employee)
         /// </summary>
-        [HttpGet("bank-accounts/all")]
+        [HttpGet("all")]
+        [Authorize(Roles = "Employee")]
         public async Task<ActionResult<List<BankAccountDto>>> GetAllBankAccounts()
         {
             var accounts = await _bankAccountService.GetAllAsync();
@@ -61,17 +68,20 @@ namespace api.Features.BankAccount
         /// <summary>
         /// Creates new bank account
         /// </summary>
-        [HttpPost("bank-accounts")]
-        public async Task<ActionResult<BankAccountDto>> CreateBankAccount([FromBody] Guid id)
+        [HttpPost]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<BankAccountDto>> CreateBankAccount()
         {
-            var account = await _bankAccountService.AddAsync(id);
+            var userId = User.GetId();
+            var account = await _bankAccountService.AddAsync(new Guid(userId));
             return Ok(account);
         }
 
         /// <summary>
         /// Deletes a bank account
         /// </summary>
-        [HttpDelete("bank-accounts/{id}")]
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> DeleteBankAccount([FromRoute] Guid id)
         {
             throw new NotImplementedException();
@@ -80,7 +90,8 @@ namespace api.Features.BankAccount
         /// <summary>
         /// Deposits money to a bank account
         /// </summary>
-        [HttpPut("bank-accounts/{id}/deposit")]
+        [HttpPut("{id}/deposit")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<BankAccountDto>> AddMoneyToBankAccount(
             [FromRoute] Guid id,
             [FromBody] MoneyOperationDto dto
@@ -91,9 +102,10 @@ namespace api.Features.BankAccount
         }
 
         /// <summary>
-        /// Withdraws money to a bank account
+        /// Withdraws money from a bank account
         /// </summary>
-        [HttpPut("bank-accounts/{id}/withdraw")]
+        [HttpPut("{id}/withdraw")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<BankAccountDto>> WithdrawMoneyToBankAccount(
             [FromRoute] Guid id,
             [FromBody] MoneyOperationDto dto
@@ -101,6 +113,34 @@ namespace api.Features.BankAccount
         {
             var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto);
             return Ok(bankAccount);
+        }
+
+        /// <summary>
+        /// Apply credit to a bank account
+        /// </summary>
+        [HttpPut("/internal/bank-accounts/{id}/apply-credit")]
+        [Extensions.ServiceKey]
+        public async Task<ActionResult<BankAccountDto>> ApplyCredit(
+            [FromRoute] Guid id,
+            [FromBody] MoneyOperationDto dto
+        )
+        {
+            await _bankAccountService.ApplyCredit(id, dto);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Pay credit from a bank account
+        /// </summary>
+        [HttpPut("/internal/bank-accounts/{id}/pay-credit")]
+        [Extensions.ServiceKey]
+        public async Task<ActionResult<BankAccountDto>> PayCredit(
+            [FromRoute] Guid id,
+            [FromBody] MoneyOperationDto dto
+        )
+        {
+            await _bankAccountService.PayCredit(id, dto);
+            return Ok();
         }
     }
 }
