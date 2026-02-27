@@ -16,5 +16,7 @@ namespace api.Interfaces
         Task<List<BankAccountOperationDto>> GetHistoryAsync(Guid bankAccountId);
         Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto);
         Task<BankAccountDto> WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto);
+        Task ApplyCredit(Guid id, MoneyOperationDto operationDto);
+        Task PayCredit(Guid id, MoneyOperationDto operationDto);
     }
 }

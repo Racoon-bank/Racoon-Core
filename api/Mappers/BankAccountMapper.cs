@@ -14,6 +14,7 @@ namespace api.Mappers
             return new BankAccountDto
             {
                 Id = bankAccount.Id,
+                UserId = bankAccount.UserId,
                 AccountNumber = bankAccount.AccountNumber,
                 Balance = bankAccount.Balance,
                 CreatedAt = bankAccount.CreatedAt,

@@ -4,5 +4,7 @@ namespace api.Enum
     {
         Deposit,
         Withdraw,
+        CreditIssued,
+        CreditPayment
     }
 }
