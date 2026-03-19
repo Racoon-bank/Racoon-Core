@@ -1,8 +1,8 @@
 using api.Features.BankAccount.Dto;
-using api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using api.Extensions;
+using api.Features.Transfers;
 
 namespace api.Features.BankAccount
 {
@@ -11,9 +11,11 @@ namespace api.Features.BankAccount
     public class BankAccountController : ControllerBase
     {
         private readonly IBankAccountService _bankAccountService;
-        public BankAccountController(IBankAccountService bankAccountService)
+        private readonly ITransferService _transferService;
+        public BankAccountController(IBankAccountService bankAccountService, ITransferService transferService)
         {
             _bankAccountService = bankAccountService;
+            _transferService = transferService;
         }
 
         /// <summary>
@@ -70,10 +72,10 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "User")]
-        public async Task<ActionResult<BankAccountDto>> CreateBankAccount()
+        public async Task<ActionResult<BankAccountDto>> CreateBankAccount([FromBody] CreateBankAccountDto dto)
         {
             var userId = User.GetId();
-            var account = await _bankAccountService.AddAsync(new Guid(userId));
+            var account = await _bankAccountService.AddAsync(new Guid(userId), dto);
             return Ok(account);
         }
 
@@ -84,7 +86,20 @@ namespace api.Features.BankAccount
         [Authorize(Roles = "User")]
         public async Task<IActionResult> DeleteBankAccount([FromRoute] Guid id)
         {
-            throw new NotImplementedException();
+            await _bankAccountService.DeleteAsync(id);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Changes visibility of bank account
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> ChangeBankAccountVisibility([FromRoute] Guid id)
+        {
+            var userId = User.GetId();
+            var account = await _bankAccountService.ChangeVisibility(id, new Guid(userId));
+            return Ok(account);
         }
 
         /// <summary>
@@ -112,6 +127,20 @@ namespace api.Features.BankAccount
         )
         {
             var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto);
+            return Ok(bankAccount);
+        }
+
+        /// <summary>
+        /// Transfer money from one bank account to another one
+        /// </summary>
+        [HttpPut("transfer")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<BankAccountDto>> TransferMoney(
+            [FromBody] TransferDto dto
+        )
+        {
+            var userId = User.GetId();
+            var bankAccount = await _transferService.TransferMoneyAsync(dto, userId);
             return Ok(bankAccount);
         }
 

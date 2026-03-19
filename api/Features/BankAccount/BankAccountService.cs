@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using api.Data;
 using api.Enum;
 using api.Exceptions;
+using api.Features.BankAccount;
 using api.Features.BankAccount.Dto;
-using api.Interfaces;
 using api.Mappers;
 using api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -22,15 +22,15 @@ namespace api.Features
             _context = context;
         }
 
-        public async Task<BankAccountDto> AddAsync(Guid userId)
+        public async Task<BankAccountDto> AddAsync(Guid userId, CreateBankAccountDto dto)
         {
-            var bankAccount = new Models.BankAccount(userId);
+            var bankAccount = new Models.BankAccount(userId, dto.Currency);
             await _context.BankAccounts.AddAsync(bankAccount);
             await _context.SaveChangesAsync();
             return bankAccount.ToBankAccountDto();
         }
 
-        public async Task<Models.BankAccount?> DeleteAsync(Guid bankAccountId)
+        public async Task DeleteAsync(Guid bankAccountId)
         {
             var account = await GetByIdAsync(bankAccountId);
             if (account == null)
@@ -38,7 +38,6 @@ namespace api.Features
 
             _context.BankAccounts.Remove(account); // all remaining money goes to poor HITs students
             await _context.SaveChangesAsync();
-            return account;
         }
 
         public async Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto)
@@ -87,22 +86,24 @@ namespace api.Features
                 .ToListAsync();
         }
 
+        public async Task<BankAccountDto> ChangeVisibility(Guid id, Guid userId)
+        {
+            var account = await GetByIdAsync(id);
+            if (account == null)
+                throw new BankAccountNotFoundException(id);
+            if (account.UserId != userId)
+                throw new UnathorizedAccessException();
+
+            account.IsHidden = !account.IsHidden;
+            await _context.SaveChangesAsync();
+            return account.ToBankAccountDto();
+        }
+
         private async Task AddBankAccountOperation(BankAccountOperation bankAccountOperation)
         {
             await _context.BankAccountOperations.AddAsync(bankAccountOperation);
             await _context.SaveChangesAsync();
         }
-
-        // private async Task<Models.BankAccount> UpdateAsync(
-        //     Models.BankAccount account,
-        //     decimal newBalance
-        // )
-        // {
-        //     account.Balance = newBalance;
-        //     _context.BankAccounts.Update(account);
-        //     await _context.SaveChangesAsync();
-        //     return account;
-        // }
 
         private async Task<Models.BankAccount?> GetByIdAsync(Guid bankAccountId)
         {

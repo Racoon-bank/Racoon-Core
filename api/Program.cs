@@ -3,7 +3,9 @@ using System.Text.Json.Serialization;
 using api.Data;
 using api.Exceptions;
 using api.Features;
-using api.Interfaces;
+using api.Features.BankAccount;
+using api.Features.Currency;
+using api.Features.Transfers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.CodeAnalysis.Options;
@@ -83,6 +85,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IBankAccountService, BankAccountService>();
+builder.Services.AddScoped<ITransferService, TransferService>();
+builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 
 var app = builder.Build();
 
@@ -113,6 +117,7 @@ app.UseExceptionHandler(errorApp =>
                 break;
 
             case InsufficientFundsException:
+            case FailedToFetchExchangeRateException:
                 context.Response.StatusCode = 400;
                 break;
 
