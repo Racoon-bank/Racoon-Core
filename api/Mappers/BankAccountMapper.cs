@@ -17,7 +17,9 @@ namespace api.Mappers
                 UserId = bankAccount.UserId,
                 AccountNumber = bankAccount.AccountNumber,
                 Balance = bankAccount.Balance,
+                Currency = bankAccount.Currency,
                 CreatedAt = bankAccount.CreatedAt,
+                IsHidden = bankAccount.IsHidden,
             };
         }
 

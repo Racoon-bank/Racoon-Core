@@ -1,3 +1,4 @@
+using api.Enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,17 +13,21 @@ namespace api.Models
         public Guid UserId { get; set; }
         public string AccountNumber { get; set; } = string.Empty;
         public decimal Balance { get; set; }
+        public Currency Currency { get; set; }
+        public bool IsHidden { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<BankAccountOperation> BankAccountHistory { get; set; } =
             new List<BankAccountOperation>();
 
-        public BankAccount(Guid userId)
+        public BankAccount(Guid userId, Currency currency)
         {
             Id = Guid.NewGuid();
             UserId = userId;
             AccountNumber = GenerateAccountNumber();
             Balance = 0m;
+            Currency = currency;
             CreatedAt = DateTime.UtcNow;
+            IsHidden = false;
         }
 
         private static string GenerateAccountNumber()

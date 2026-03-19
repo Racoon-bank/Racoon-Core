@@ -9,5 +9,8 @@ namespace api.Exceptions
     {
         public BankAccountNotFoundException(Guid id)
             : base($"Bank account with id = {id} not found") { }
+
+        public BankAccountNotFoundException(string number)
+            : base($"Bank account with number = {number} not found") { }
     }
 }
