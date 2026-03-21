@@ -1,4 +1,5 @@
-﻿using api.Data;
+﻿using api.Broker;
+using api.Data;
 using api.Enum;
 using api.Exceptions;
 using api.Features.BankAccount.Dto;
@@ -15,15 +16,15 @@ namespace api.Features.Transfers
     {
         private readonly ApplicationDbContext _context;
         private readonly ICurrencyService _currencyService;
-        private readonly IHubContext<BankHub> _hub;
+        private readonly IMessagePublisher _publisher;
 
-        public TransferService(ApplicationDbContext context, ICurrencyService currencyService, IHubContext<BankHub> hub)
+        public TransferService(ApplicationDbContext context, ICurrencyService currencyService, IMessagePublisher publisher)
         {
             _context = context;
             _currencyService = currencyService;
-            _hub = hub;
+            _publisher = publisher;
         }
-        public async Task<BankAccountDto> TransferMoneyAsync(TransferDto dto, string userId)
+        public async Task TransferMoneyAsync(TransferDto dto, string userId)
         {
             var fromAccount = await GetBankAccountOrThrowAsync(dto.FromAccountId);
             if (fromAccount.UserId != new Guid(userId))
@@ -40,52 +41,13 @@ namespace api.Features.Transfers
                 convertedAmount = Math.Round(dto.Amount * rate, 2);
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
+            await _publisher.PublishAsync(new TransferMessage
             {
-                fromAccount.Balance -= dto.Amount;
-                toAccount.Balance += convertedAmount;
-
-                var now = DateTime.UtcNow;
-                var withdrawOperation = new BankAccountOperation
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = dto.Amount,
-                    Type = OperationType.TransferOut,
-                    CreatedAt = now,
-                    BankAccountId = fromAccount.Id
-                };
-                var depositOperation = new BankAccountOperation
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = convertedAmount,
-                    Type = OperationType.TransferIn,
-                    CreatedAt = now,
-                    BankAccountId = toAccount.Id
-                };
-
-                _context.BankAccountOperations.AddRange(withdrawOperation, depositOperation);
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                await _hub.Clients.Group(fromAccount.Id.ToString()).SendAsync("OperationCreated", new
-                {
-                    accountId = fromAccount.Id
-                });
-
-                await _hub.Clients.Group(toAccount.Id.ToString()).SendAsync("OperationCreated", new
-                {
-                    accountId = toAccount.Id
-                });
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-            return fromAccount.ToBankAccountDto();
+                FromAccountId = fromAccount.Id,
+                ToAccountId = toAccount.Id,
+                Amount = dto.Amount,
+                ConvertedAmount = convertedAmount
+            }, "transfers");
         }
 
         private async Task<Models.BankAccount> GetBankAccountOrThrowAsync(Guid id)

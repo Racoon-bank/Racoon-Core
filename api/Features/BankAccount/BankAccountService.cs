@@ -19,13 +19,11 @@ namespace api.Features
     public class BankAccountService : IBankAccountService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IHubContext<BankHub> _hub;
         private readonly IMessagePublisher _publisher;
 
-        public BankAccountService(ApplicationDbContext context, IHubContext<BankHub> hub, IMessagePublisher publisher)
+        public BankAccountService(ApplicationDbContext context, IMessagePublisher publisher)
         {
             _context = context;
-            _hub = hub;
             _publisher = publisher;
         }
 
@@ -130,23 +128,6 @@ namespace api.Features
                 Amount = amount,
                 Type = operationType
             }, "operations");
-
-            // account.Balance = newBalance;
-            // _context.BankAccountOperations.Add(new BankAccountOperation
-            // {
-            //     Id = Guid.NewGuid(),
-            //     Amount = Math.Abs(amount),
-            //     Type = operationType,
-            //     CreatedAt = DateTime.UtcNow,
-            //     BankAccountId = account.Id
-            // });
-
-            // await _context.SaveChangesAsync();
-
-            // await _hub.Clients.Group(account.Id.ToString()).SendAsync("OperationCreated", new
-            // {
-            //     accountId = account.Id
-            // });
         }
     }
 }

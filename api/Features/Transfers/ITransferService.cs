@@ -4,6 +4,6 @@ namespace api.Features.Transfers
 {
     public interface ITransferService
     {
-        Task<BankAccountDto> TransferMoneyAsync(TransferDto dto, string userId);
+        Task TransferMoneyAsync(TransferDto dto, string userId);
     }
 }

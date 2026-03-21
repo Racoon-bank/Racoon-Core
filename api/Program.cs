@@ -107,6 +107,7 @@ builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
 builder.Services.AddHostedService<OperationConsumer>();
+builder.Services.AddHostedService<TransferConsumer>();
 
 var app = builder.Build();
 
