@@ -34,27 +34,28 @@ namespace api.Features
             return bankAccount.ToBankAccountDto();
         }
 
-        public async Task DeleteAsync(Guid bankAccountId)
+        public async Task DeleteAsync(Guid bankAccountId, string? userId)
         {
-            var account = await GetByIdAsync(bankAccountId);
-            if (account == null)
-                throw new BankAccountNotFoundException(bankAccountId);
+            var account = await GetByIdOrThrowAsync(bankAccountId);
+            if (userId == null || account.UserId != new Guid(userId))
+                throw new UnathorizedAccessException();
 
             _context.BankAccounts.Remove(account); // all remaining money goes to poor HITs students
             await _context.SaveChangesAsync();
         }
 
-        public async Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto)
+        public async Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
         {
+            await CheckUserAccess(id, userId);
+
             var account = await ChangeBalanceAsync(id, operationDto.Amount, OperationType.Deposit);
             return account.ToBankAccountDto();
         }
 
-        public async Task<BankAccountDto> WithdrawMoneyAsync(
-            Guid id,
-            MoneyOperationDto operationDto
-        )
+        public async Task<BankAccountDto> WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
         {
+            await CheckUserAccess(id, userId);
+
             var account = await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.Withdraw);
             return account.ToBankAccountDto();
         }
@@ -92,9 +93,7 @@ namespace api.Features
 
         public async Task<BankAccountDto> ChangeVisibility(Guid id, Guid userId)
         {
-            var account = await GetByIdAsync(id);
-            if (account == null)
-                throw new BankAccountNotFoundException(id);
+            var account = await GetByIdOrThrowAsync(id);
             if (account.UserId != userId)
                 throw new UnathorizedAccessException();
 
@@ -103,19 +102,26 @@ namespace api.Features
             return account.ToBankAccountDto();
         }
 
-        private async Task<Models.BankAccount?> GetByIdAsync(Guid bankAccountId)
+        private async Task<Models.BankAccount> GetByIdOrThrowAsync(Guid bankAccountId)
         {
-            return await _context.BankAccounts.FirstOrDefaultAsync(x => x.Id == bankAccountId);
+            var account = await _context.BankAccounts.FirstOrDefaultAsync(x => x.Id == bankAccountId);
+            if (account == null)
+                throw new BankAccountNotFoundException(bankAccountId);
+            return account;
+        }
+
+        private async Task CheckUserAccess(Guid bankAccountId, string? userId)
+        {
+            var account = await GetByIdOrThrowAsync(bankAccountId);
+            if (userId == null || account.UserId != new Guid(userId))
+                throw new UnathorizedAccessException();
         }
 
         private async Task<Models.BankAccount> ChangeBalanceAsync(Guid accountId, decimal amount, OperationType operationType)
         {
-            var account = await GetByIdAsync(accountId);
-            if (account == null)
-                throw new BankAccountNotFoundException(accountId);
+            var account = await GetByIdOrThrowAsync(accountId);
 
             var newBalance = account.Balance + amount;
-
             if (newBalance < 0)
                 throw new InsufficientFundsException();
 

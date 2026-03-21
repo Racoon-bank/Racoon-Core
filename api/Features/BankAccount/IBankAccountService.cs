@@ -12,10 +12,10 @@ namespace api.Features.BankAccount
         Task<List<BankAccountDto>> GetAllByIdAsync(Guid userId);
         Task<List<BankAccountDto>> GetAllAsync();
         Task<BankAccountDto> AddAsync(Guid userId, CreateBankAccountDto dto);
-        Task DeleteAsync(Guid bankAccountId);
+        Task DeleteAsync(Guid bankAccountId, string? userId);
         Task<List<BankAccountOperationDto>> GetHistoryAsync(Guid bankAccountId);
-        Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto);
-        Task<BankAccountDto> WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto);
+        Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId);
+        Task<BankAccountDto> WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId);
         Task ApplyCredit(Guid id, MoneyOperationDto operationDto);
         Task PayCredit(Guid id, MoneyOperationDto operationDto);
         Task<BankAccountDto> ChangeVisibility(Guid id, Guid userId);
