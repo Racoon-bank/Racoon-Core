@@ -86,7 +86,8 @@ namespace api.Features.BankAccount
         [Authorize(Roles = "User")]
         public async Task<IActionResult> DeleteBankAccount([FromRoute] Guid id)
         {
-            await _bankAccountService.DeleteAsync(id);
+            var userId = User.GetId();
+            await _bankAccountService.DeleteAsync(id, userId);
             return Ok();
         }
 
@@ -112,7 +113,8 @@ namespace api.Features.BankAccount
             [FromBody] MoneyOperationDto dto
         )
         {
-            var bankAccount = await _bankAccountService.DepositMoneyAsync(id, dto);
+            var userId = User.GetId();
+            var bankAccount = await _bankAccountService.DepositMoneyAsync(id, dto, userId);
             return Ok(bankAccount);
         }
 
@@ -126,7 +128,8 @@ namespace api.Features.BankAccount
             [FromBody] MoneyOperationDto dto
         )
         {
-            var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto);
+            var userId = User.GetId();
+            var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto, userId);
             return Ok(bankAccount);
         }
 

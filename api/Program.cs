@@ -6,6 +6,7 @@ using api.Features;
 using api.Features.BankAccount;
 using api.Features.Currency;
 using api.Features.Transfers;
+using api.Websocket;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.CodeAnalysis.Options;
@@ -80,6 +81,21 @@ builder.Services.AddAuthentication(options =>
             System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"])
         )
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/ws"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -87,6 +103,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<ITransferService, TransferService>();
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -133,6 +150,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<BankHub>("/ws");
 
 app.MapControllers();
 app.Run();

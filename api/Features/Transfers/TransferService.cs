@@ -5,6 +5,8 @@ using api.Features.BankAccount.Dto;
 using api.Features.Currency;
 using api.Mappers;
 using api.Models;
+using api.Websocket;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Features.Transfers
@@ -13,11 +15,13 @@ namespace api.Features.Transfers
     {
         private readonly ApplicationDbContext _context;
         private readonly ICurrencyService _currencyService;
+        private readonly IHubContext<BankHub> _hub;
 
-        public TransferService(ApplicationDbContext context, ICurrencyService currencyService)
+        public TransferService(ApplicationDbContext context, ICurrencyService currencyService, IHubContext<BankHub> hub)
         {
             _context = context;
             _currencyService = currencyService;
+            _hub = hub;
         }
         public async Task<BankAccountDto> TransferMoneyAsync(TransferDto dto, string userId)
         {
@@ -65,6 +69,16 @@ namespace api.Features.Transfers
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                await _hub.Clients.Group(fromAccount.Id.ToString()).SendAsync("OperationCreated", new
+                {
+                    accountId = fromAccount.Id
+                });
+
+                await _hub.Clients.Group(toAccount.Id.ToString()).SendAsync("OperationCreated", new
+                {
+                    accountId = toAccount.Id
+                });
             }
             catch
             {
@@ -77,7 +91,8 @@ namespace api.Features.Transfers
         private async Task<Models.BankAccount> GetBankAccountOrThrowAsync(Guid id)
         {
             var bankAccount = await _context.BankAccounts.FirstOrDefaultAsync(b => b.Id == id);
-            if (bankAccount == null) {
+            if (bankAccount == null)
+            {
                 throw new BankAccountNotFoundException(id);
             }
             return bankAccount;
