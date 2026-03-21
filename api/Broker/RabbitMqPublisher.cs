@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using api.Broker.Dto;
 using RabbitMQ.Client;
 
 namespace api.Broker
@@ -8,14 +9,13 @@ namespace api.Broker
     {
         private readonly IConnection _connection;
         private readonly IChannel _channel;
-
-        public RabbitMqPublisher()
+        public RabbitMqPublisher(IConfiguration configuration)
         {
             var factory = new ConnectionFactory()
             {
-                HostName = "localhost",
-                UserName = "admin",
-                Password = "admin123"
+                HostName = configuration["RabbitMQ:HostName"]!,
+                UserName = configuration["RabbitMQ:UserName"]!,
+                Password = configuration["RabbitMQ:Password"]!,
             };
 
             _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();

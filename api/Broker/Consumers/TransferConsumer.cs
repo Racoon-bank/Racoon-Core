@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using api.Broker.Dto;
 using api.Data;
 using api.Enum;
 using api.Exceptions;
@@ -18,19 +19,26 @@ namespace api.Broker
     public class TransferConsumer : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly BrokerConfig _config;
 
-        public TransferConsumer(IServiceScopeFactory scopeFactory)
+        public TransferConsumer(IServiceScopeFactory scopeFactory, IConfiguration configuration)
         {
             _scopeFactory = scopeFactory;
+            _config = new BrokerConfig
+            {
+                HostName = configuration["RabbitMQ:HostName"]!,
+                UserName = configuration["RabbitMQ:UserName"]!,
+                Password = configuration["RabbitMQ:Password"]!,
+            };
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var factory = new ConnectionFactory()
             {
-                HostName = "localhost",
-                UserName = "admin",
-                Password = "admin123"
+                HostName = _config.HostName,
+                UserName = _config.UserName,
+                Password = _config.Password
             };
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
