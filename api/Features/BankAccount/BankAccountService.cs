@@ -9,6 +9,8 @@ using api.Features.BankAccount;
 using api.Features.BankAccount.Dto;
 using api.Mappers;
 using api.Models;
+using api.Websocket;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Features
@@ -16,10 +18,12 @@ namespace api.Features
     public class BankAccountService : IBankAccountService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<BankHub> _hub;
 
-        public BankAccountService(ApplicationDbContext context)
+        public BankAccountService(ApplicationDbContext context, IHubContext<BankHub> hub)
         {
             _context = context;
+            _hub = hub;
         }
 
         public async Task<BankAccountDto> AddAsync(Guid userId, CreateBankAccountDto dto)
@@ -99,12 +103,6 @@ namespace api.Features
             return account.ToBankAccountDto();
         }
 
-        private async Task AddBankAccountOperation(BankAccountOperation bankAccountOperation)
-        {
-            await _context.BankAccountOperations.AddAsync(bankAccountOperation);
-            await _context.SaveChangesAsync();
-        }
-
         private async Task<Models.BankAccount?> GetByIdAsync(Guid bankAccountId)
         {
             return await _context.BankAccounts.FirstOrDefaultAsync(x => x.Id == bankAccountId);
@@ -133,6 +131,11 @@ namespace api.Features
             });
 
             await _context.SaveChangesAsync();
+
+            await _hub.Clients.Group(account.Id.ToString()).SendAsync("OperationCreated", new
+            {
+                accountId = account.Id
+            });
 
             return account;
         }
