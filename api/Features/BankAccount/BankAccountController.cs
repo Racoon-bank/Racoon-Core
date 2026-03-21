@@ -114,8 +114,8 @@ namespace api.Features.BankAccount
         )
         {
             var userId = User.GetId();
-            var bankAccount = await _bankAccountService.DepositMoneyAsync(id, dto, userId);
-            return Ok(bankAccount);
+            await _bankAccountService.DepositMoneyAsync(id, dto, userId);
+            return Ok();
         }
 
         /// <summary>
@@ -129,8 +129,8 @@ namespace api.Features.BankAccount
         )
         {
             var userId = User.GetId();
-            var bankAccount = await _bankAccountService.WithdrawMoneyAsync(id, dto, userId);
-            return Ok(bankAccount);
+            await _bankAccountService.WithdrawMoneyAsync(id, dto, userId);
+            return Ok();
         }
 
         /// <summary>
@@ -143,8 +143,8 @@ namespace api.Features.BankAccount
         )
         {
             var userId = User.GetId();
-            var bankAccount = await _transferService.TransferMoneyAsync(dto, userId);
-            return Ok(bankAccount);
+            await _transferService.TransferMoneyAsync(dto, userId);
+            return Ok();
         }
 
         /// <summary>

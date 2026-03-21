@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Broker;
 using api.Data;
 using api.Enum;
 using api.Exceptions;
@@ -18,12 +19,12 @@ namespace api.Features
     public class BankAccountService : IBankAccountService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IHubContext<BankHub> _hub;
+        private readonly IMessagePublisher _publisher;
 
-        public BankAccountService(ApplicationDbContext context, IHubContext<BankHub> hub)
+        public BankAccountService(ApplicationDbContext context, IMessagePublisher publisher)
         {
             _context = context;
-            _hub = hub;
+            _publisher = publisher;
         }
 
         public async Task<BankAccountDto> AddAsync(Guid userId, CreateBankAccountDto dto)
@@ -44,30 +45,26 @@ namespace api.Features
             await _context.SaveChangesAsync();
         }
 
-        public async Task<BankAccountDto> DepositMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
+        public async Task DepositMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
         {
             await CheckUserAccess(id, userId);
-
-            var account = await ChangeBalanceAsync(id, operationDto.Amount, OperationType.Deposit);
-            return account.ToBankAccountDto();
+            await ChangeBalanceAsync(id, operationDto.Amount, OperationType.Deposit);
         }
 
-        public async Task<BankAccountDto> WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
+        public async Task WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId)
         {
             await CheckUserAccess(id, userId);
-
-            var account = await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.Withdraw);
-            return account.ToBankAccountDto();
+            await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.Withdraw);
         }
 
         public async Task ApplyCredit(Guid id, MoneyOperationDto operationDto)
         {
-            var account = await ChangeBalanceAsync(id, operationDto.Amount, OperationType.CreditIssued);
+            await ChangeBalanceAsync(id, operationDto.Amount, OperationType.CreditIssued);
         }
 
         public async Task PayCredit(Guid id, MoneyOperationDto operationDto)
         {
-            var account = await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.CreditPayment);
+            await ChangeBalanceAsync(id, -operationDto.Amount, OperationType.CreditPayment);
         }
 
         public async Task<List<BankAccountDto>> GetAllAsync()
@@ -117,7 +114,7 @@ namespace api.Features
                 throw new UnathorizedAccessException();
         }
 
-        private async Task<Models.BankAccount> ChangeBalanceAsync(Guid accountId, decimal amount, OperationType operationType)
+        private async Task ChangeBalanceAsync(Guid accountId, decimal amount, OperationType operationType)
         {
             var account = await GetByIdOrThrowAsync(accountId);
 
@@ -125,25 +122,12 @@ namespace api.Features
             if (newBalance < 0)
                 throw new InsufficientFundsException();
 
-            account.Balance = newBalance;
-
-            _context.BankAccountOperations.Add(new BankAccountOperation
+            await _publisher.PublishAsync(new OperationMessage
             {
-                Id = Guid.NewGuid(),
-                Amount = Math.Abs(amount),
-                Type = operationType,
-                CreatedAt = DateTime.UtcNow,
-                BankAccountId = account.Id
-            });
-
-            await _context.SaveChangesAsync();
-
-            await _hub.Clients.Group(account.Id.ToString()).SendAsync("OperationCreated", new
-            {
-                accountId = account.Id
-            });
-
-            return account;
+                AccountId = account.Id,
+                Amount = amount,
+                Type = operationType
+            }, "operations");
         }
     }
 }
