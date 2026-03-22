@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.4",
   "info": {
-    "title": "api",
-    "version": "1.0"
+    "title": "Racoon Bank Core Api",
+    "version": "v1"
   },
   "paths": {
     "/api/bank-accounts/my": {
@@ -149,7 +149,7 @@
         "tags": [
           "BankAccount"
         ],
-        "summary": "Gets all bank accounts of a user (for employee)",
+        "summary": "Gets all bank accounts (for employee)",
         "responses": {
           "200": {
             "description": "OK",
@@ -189,6 +189,25 @@
           "BankAccount"
         ],
         "summary": "Creates new bank account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -219,6 +238,28 @@
           "BankAccount"
         ],
         "summary": "Deletes a bank account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Changes visibility of bank account",
         "parameters": [
           {
             "name": "id",
@@ -302,7 +343,176 @@
         "tags": [
           "BankAccount"
         ],
-        "summary": "Withdraws money to a bank account",
+        "summary": "Withdraws money from a bank account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-accounts/transfer": {
+      "put": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Transfer money from one bank account to another one",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/bank-accounts/{id}/apply-credit": {
+      "put": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Apply credit to a bank account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoneyOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/bank-accounts/{id}/pay-credit": {
+      "put": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Pay credit from a bank account",
         "parameters": [
           {
             "name": "id",
@@ -379,6 +589,12 @@
             "type": "number",
             "format": "double"
           },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "isHidden": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -407,6 +623,26 @@
         },
         "additionalProperties": false
       },
+      "CreateBankAccountDto": {
+        "required": [
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Currency": {
+        "enum": [
+          "RUB",
+          "USD",
+          "EUR"
+        ],
+        "type": "string"
+      },
       "MoneyOperationDto": {
         "type": "object",
         "properties": {
@@ -421,10 +657,48 @@
       "OperationType": {
         "enum": [
           "Deposit",
-          "Withdraw"
+          "Withdraw",
+          "CreditIssued",
+          "CreditPayment",
+          "TransferOut",
+          "TransferIn"
         ],
         "type": "string"
+      },
+      "TransferDto": {
+        "type": "object",
+        "properties": {
+          "fromAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toAccountNumber": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "minimum": 0.01,
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Please enter a valid token",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
 }
