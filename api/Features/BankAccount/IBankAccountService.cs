@@ -18,6 +18,5 @@ namespace api.Features.BankAccount
         Task WithdrawMoneyAsync(Guid id, MoneyOperationDto operationDto, string? userId);
         Task ApplyCredit(Guid id, MoneyOperationDto operationDto);
         Task PayCredit(Guid id, MoneyOperationDto operationDto);
-        Task<BankAccountDto> ChangeVisibility(Guid id, Guid userId);
     }
 }

@@ -12,7 +12,6 @@ namespace api.Features.BankAccount.Dto
         public string AccountNumber { get; set; } = default!;
         public decimal Balance { get; set; }
         public Enum.Currency Currency { get; set; }
-        public bool IsHidden { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

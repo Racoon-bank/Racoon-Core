@@ -88,17 +88,6 @@ namespace api.Features
                 .ToListAsync();
         }
 
-        public async Task<BankAccountDto> ChangeVisibility(Guid id, Guid userId)
-        {
-            var account = await GetByIdOrThrowAsync(id);
-            if (account.UserId != userId)
-                throw new UnathorizedAccessException();
-
-            account.IsHidden = !account.IsHidden;
-            await _context.SaveChangesAsync();
-            return account.ToBankAccountDto();
-        }
-
         private async Task<Models.BankAccount> GetByIdOrThrowAsync(Guid bankAccountId)
         {
             var account = await _context.BankAccounts.FirstOrDefaultAsync(x => x.Id == bankAccountId);

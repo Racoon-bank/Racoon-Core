@@ -19,7 +19,6 @@ namespace api.Mappers
                 Balance = bankAccount.Balance,
                 Currency = bankAccount.Currency,
                 CreatedAt = bankAccount.CreatedAt,
-                IsHidden = bankAccount.IsHidden,
             };
         }
 

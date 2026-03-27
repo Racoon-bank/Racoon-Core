@@ -92,18 +92,6 @@ namespace api.Features.BankAccount
         }
 
         /// <summary>
-        /// Changes visibility of bank account
-        /// </summary>
-        [HttpPut("{id}")]
-        [Authorize(Roles = "User")]
-        public async Task<IActionResult> ChangeBankAccountVisibility([FromRoute] Guid id)
-        {
-            var userId = User.GetId();
-            var account = await _bankAccountService.ChangeVisibility(id, new Guid(userId));
-            return Ok(account);
-        }
-
-        /// <summary>
         /// Deposits money to a bank account
         /// </summary>
         [HttpPut("{id}/deposit")]
