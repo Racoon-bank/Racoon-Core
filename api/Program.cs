@@ -7,6 +7,7 @@ using api.Features;
 using api.Features.BankAccount;
 using api.Features.Currency;
 using api.Features.Transfers;
+using api.Services;
 using api.Websocket;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -123,6 +124,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<RandomFailureMiddleware>();
+
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
