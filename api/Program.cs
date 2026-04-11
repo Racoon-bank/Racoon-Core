@@ -6,6 +6,7 @@ using api.Exceptions;
 using api.Features;
 using api.Features.BankAccount;
 using api.Features.Currency;
+using api.Features.Idempotency;
 using api.Features.Transfers;
 using api.Services;
 using api.Websocket;
@@ -55,6 +56,7 @@ builder.Services.AddSwaggerGen(options =>
     });
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+    options.OperationFilter<IdempotencyFilter>();
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -104,6 +106,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<ITransferService, TransferService>();
+builder.Services.AddScoped<IIdempotencyService, IdempotencyService>();
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
@@ -124,8 +127,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseMiddleware<RandomFailureMiddleware>();
 
 app.UseExceptionHandler(errorApp =>
 {
@@ -156,8 +157,13 @@ app.UseExceptionHandler(errorApp =>
 });
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<IdempotencyMiddleware>();
+app.UseMiddleware<RandomFailureMiddleware>();
 
 app.MapHub<BankHub>("/ws");
 
