@@ -254,28 +254,6 @@
             "description": "OK"
           }
         }
-      },
-      "put": {
-        "tags": [
-          "BankAccount"
-        ],
-        "summary": "Changes visibility of bank account",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
       }
     },
     "/api/bank-accounts/{id}/deposit": {
@@ -292,6 +270,15 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Idempotency key for safe retries",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -353,6 +340,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Idempotency key for safe retries",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -404,6 +400,17 @@
           "BankAccount"
         ],
         "summary": "Transfer money from one bank account to another one",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Idempotency key for safe retries",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -591,9 +598,6 @@
           },
           "currency": {
             "$ref": "#/components/schemas/Currency"
-          },
-          "isHidden": {
-            "type": "boolean"
           },
           "createdAt": {
             "type": "string",

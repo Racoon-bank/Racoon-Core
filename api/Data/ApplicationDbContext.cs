@@ -14,6 +14,7 @@ namespace api.Data
 
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<BankAccountOperation> BankAccountOperations { get; set; }
+        public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

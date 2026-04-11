@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using api.Extensions;
 using api.Features.Transfers;
+using api.Features.Idempotency;
 
 namespace api.Features.BankAccount
 {
@@ -96,6 +97,7 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpPut("{id}/deposit")]
         [Authorize(Roles = "User")]
+        [Idempotent]
         public async Task<ActionResult<BankAccountDto>> AddMoneyToBankAccount(
             [FromRoute] Guid id,
             [FromBody] MoneyOperationDto dto
@@ -111,6 +113,7 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpPut("{id}/withdraw")]
         [Authorize(Roles = "User")]
+        [Idempotent]
         public async Task<ActionResult<BankAccountDto>> WithdrawMoneyToBankAccount(
             [FromRoute] Guid id,
             [FromBody] MoneyOperationDto dto
@@ -126,6 +129,7 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpPut("transfer")]
         [Authorize(Roles = "User")]
+        [Idempotent]
         public async Task<ActionResult<BankAccountDto>> TransferMoney(
             [FromBody] TransferDto dto
         )
