@@ -73,6 +73,7 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "User")]
+        [Idempotent]
         public async Task<ActionResult<BankAccountDto>> CreateBankAccount([FromBody] CreateBankAccountDto dto)
         {
             var userId = User.GetId();
@@ -85,6 +86,7 @@ namespace api.Features.BankAccount
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "User")]
+        [Idempotent]
         public async Task<IActionResult> DeleteBankAccount([FromRoute] Guid id)
         {
             var userId = User.GetId();
