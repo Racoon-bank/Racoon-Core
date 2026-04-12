@@ -9,6 +9,7 @@ using api.Features.Currency;
 using api.Features.Idempotency;
 using api.Features.Metrics;
 using api.Features.Transfers;
+using api.Retries;
 using api.Services;
 using api.Websocket;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -119,7 +120,8 @@ builder.Services.AddHostedService<TransferConsumer>();
 builder.Services.AddHttpClient("monitoring", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["MetricsService:HostName"]);
-});
+}).AddPolicyHandler(HttpPolicies.GetRetryPolicy())
+.AddPolicyHandler(HttpPolicies.GetCircuitBreakerPolicy());
 
 var app = builder.Build();
 
