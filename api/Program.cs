@@ -7,6 +7,7 @@ using api.Features;
 using api.Features.BankAccount;
 using api.Features.Currency;
 using api.Features.Idempotency;
+using api.Features.Metrics;
 using api.Features.Transfers;
 using api.Services;
 using api.Websocket;
@@ -110,8 +111,15 @@ builder.Services.AddScoped<IIdempotencyService, IdempotencyService>();
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+builder.Services.AddSingleton<LogBuffer>();
+builder.Services.AddHostedService<LogSenderService>();
 builder.Services.AddHostedService<OperationConsumer>();
 builder.Services.AddHostedService<TransferConsumer>();
+
+builder.Services.AddHttpClient("monitoring", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["MetricsService:HostName"]);
+});
 
 var app = builder.Build();
 
@@ -164,6 +172,7 @@ app.UseAuthorization();
 
 app.UseMiddleware<IdempotencyMiddleware>();
 app.UseMiddleware<RandomFailureMiddleware>();
+app.UseMiddleware<MetricsMiddleware>();
 
 app.MapHub<BankHub>("/ws");
 
